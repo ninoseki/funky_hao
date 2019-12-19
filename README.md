@@ -10,27 +10,33 @@ pip3 install -r requirements.txt
 ## MoqHao
 
 - Features:
-  - Extract payload(dex) from an APK file
-  - Extract 1st C2 destinations from payload
+  - Extract a hidden from MoqHao
+  - Extract 1st C2 destinations
+  - Extract step stones to phishing websites
 
 ```bash
 $ python3 moqhao/main.py --help
 Usage: main.py [OPTIONS] PATH
 
 Options:
-  --extract-payload / --no-extract-payload
-                                  Extract and save pyaload as a dex
+  --extract-dex / --no-extract-dex
+                                  Extract a hidden dex
   --help                          Show this message and exit.
 ```
 
 ```bash
-$ python3 moqhao/main.py samples/65f222e6fb45b64ee6d09195cbc0d050b37762444b00127fdf3a3c6946bae686
+$ python3 moqhao/main.py samples/foo.apk
 {
     "1stC2destinations": [
-        "https://m.youtube.com/channel/REDACTED/about",
-        "https://www.instagram.com/REDACTED",
-        "https://docs.google.com/document/d/REDACTED/mobilebasic"
+        "https://www.blogger.com/profile/foo",
+        "https://www.blogger.com/profile/bar",
     ],
-    "payload": "Payload is extracted as samples/65f222e6fb45b64ee6d09195cbc0d050b37762444b00127fdf3a3c6946bae686.dex"
+    "meta": {
+        "dex": "hidden dex is extracted as samples/foo.dex"
+    },
+    "phishingStepStones": [
+        "https://www.pinterest.com/foo/",
+        "https://www.pinterest.com/bar/",
+    ]
 }
 ```
