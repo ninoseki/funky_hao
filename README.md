@@ -10,7 +10,7 @@ pip3 install -r requirements.txt
 ## MoqHao
 
 - Features:
-  - Extract a hidden from MoqHao
+  - Extract a hidden dex
   - Extract 1st C2 destinations
   - Extract step stones to phishing websites
 
