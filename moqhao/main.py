@@ -9,7 +9,7 @@ import json
 import zlib
 
 
-MAGICNUMBER_TO_SKIP = 4
+BYTES_TO_SKIP = 4
 
 
 def parse_apk(path):
@@ -23,7 +23,7 @@ def parse_apk(path):
 def decrypt_dex(data):
     # credit: https://securelist.com/roaming-mantis-part-iv/90332/
     try:
-        decompressed = zlib.decompress((data[MAGICNUMBER_TO_SKIP:]))
+        decompressed = zlib.decompress((data[BYTES_TO_SKIP:]))
         b64decoded = base64.b64decode(decompressed)
         return dvm.DalvikVMFormat(b64decoded)
     except:
@@ -32,7 +32,8 @@ def decrypt_dex(data):
 
 def find_hidden_dex(apk: APK):
     files = apk.get_files()
-    hidden_dex_names = [x for x in files if re.match(r"assets/./.+", x)]
+    hidden_dex_names = [x for x in files if re.match(
+        r"assets/[a-z0-9]+/[a-z0-9]+", x)]
     if len(hidden_dex_names) == 1:
         hidden_dex_name = hidden_dex_names[0]
         data = apk.get_file(hidden_dex_name)
@@ -64,10 +65,16 @@ def find_first_c2_accounts(strings: List[str]):
     return urls
 
 
+def find_phishing_step_stones(strings: List[str]):
+    accounts = [x for x in strings if re.match(
+        r"https:\/\/www\.pinterest\.com/[a-z0-9]+\/", x)]
+    return accounts
+
+
 @click.command()
 @click.argument("path", type=click.Path(exists=True))
-@click.option("--extract-payload/--no-extract-payload", default=True, help="Extract and save pyaload as a dex")
-def main(path, extract_payload):
+@click.option("--extract-dex/--no-extract-dex", default=True, help="Extract a hidden dex")
+def main(path, extract_dex):
     apk = parse_apk(path)
     if apk is None:
         print("Invalid apk is given")
@@ -79,15 +86,18 @@ def main(path, extract_payload):
         sys.exit(1)
 
     output = {}
+    meta = {}
 
-    if extract_payload:
+    if extract_dex:
         filename = "{}.dex".format(path)
         with open(filename, "wb") as fp:
             fp.write(dex.get_buff())
-            output["payload"] = "Payload is extracted as {}".format(filename)
+            meta["dex"] = "hidden dex is extracted as {}".format(filename)
 
-    first_c2_accounts = find_first_c2_accounts(dex.get_strings())
-    output["1stC2destinations"] = first_c2_accounts
+    strings = dex.get_strings()
+    output["1stC2destinations"] = find_first_c2_accounts(strings)
+    output["phishingStepStones"] = find_phishing_step_stones(strings)
+    output["meta"] = meta
     print(json.dumps(output, sort_keys=True, indent=4))
 
 
