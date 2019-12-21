@@ -11,8 +11,8 @@ pip3 install -r requirements.txt
 
 - Features:
   - Extract a hidden dex
-  - Extract 1st C2 destinations
-  - Extract step stones to phishing websites
+  - Extract C2 destinations
+  - Extract phishing websites
 
 ```bash
 $ python3 moqhao/main.py --help
@@ -25,18 +25,5 @@ Options:
 ```
 
 ```bash
-$ python3 moqhao/main.py samples/foo.apk
-{
-    "1stC2destinations": [
-        "https://www.blogger.com/profile/foo",
-        "https://www.blogger.com/profile/bar",
-    ],
-    "meta": {
-        "dex": "hidden dex is extracted as samples/foo.dex"
-    },
-    "phishingStepStones": [
-        "https://www.pinterest.com/foo/",
-        "https://www.pinterest.com/bar/",
-    ]
-}
+python3 moqhao/main.py samples/foo.apk
 ```

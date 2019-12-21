@@ -3,13 +3,14 @@ from androguard.core.bytecodes.apk import APK
 from typing import List
 import base64
 import click
-import re
-import sys
 import json
+import re
+import os
+import sys
 import zlib
 
-
 BYTES_TO_SKIP = 4
+KEY = b"Ab5d1Q32"
 
 
 def parse_apk(path):
@@ -42,33 +43,65 @@ def find_hidden_dex(apk: APK):
     return None
 
 
-def find_first_c2_accounts(strings: List[str]):
+def build_adapter(id: str, provider: str):
+    # TODO: implement VK adapter
+    if provider == "youtube":
+        return YouTube(id)
+    elif provider == "ins":
+        return Instagram(id)
+    elif provider == "GoogleDoc":
+        return Google(id)
+    elif provider == "GoogleDoc2":
+        return Google(id)
+    elif provider == "blogger":
+        return Blogger(id)
+    elif provider == "pinterest":
+        return Pinterest(id)
+    else:
+        return
+
+
+def find_c2(strings: List[str]):
     accounts = [x for x in strings if re.match(r"^[a-z]+\|.+", x)]
     if len(accounts) != 1:
         return []
 
-    urls = []
+    c2 = {}
     for account in accounts[0].split("|")[1:]:
-        name, provider = account.split("@")
-        if provider == "youtube":
-            urls.append("https://m.youtube.com/channel/{}/about".format(name))
-        elif provider == "ins":
-            urls.append("https://www.instagram.com/{}/".format(name))
-        elif provider == "GoogleDoc" or provider == "GoogleDoc2":
-            urls.append(
-                "https://docs.google.com/document/d/{}/mobilebasic".format(name))
-        elif provider == "vk":
-            urls.append("https://m.vk.com/{}?act=info".format(name))
-        elif provider == "blogger":
-            urls.append("https://www.blogger.com/profile/{}".format(name))
+        id, provider = account.split("@")
+        adapter = build_adapter(id, provider)
+        if adapter is None:
+            continue
 
-    return urls
+        _c2 = adapter.find_c2()
+        if _c2 is None:
+            c2[adapter.url()] = {
+                "payload": adapter.payload(),
+                "error": "failed to analyze it",
+            }
+        else:
+            c2[adapter.url()] = {
+                "payload": adapter.payload(),
+                "destination": _c2
+            }
+
+    return c2
 
 
-def find_phishing_step_stones(strings: List[str]):
+def find_phishing(strings: List[str]):
     accounts = [x for x in strings if re.match(
         r"https:\/\/www\.pinterest\.com/[a-z0-9]+\/", x)]
-    return accounts
+
+    phishing = {}
+    for account in accounts:
+        id = account.split("/")[-2]
+        adapter = build_adapter(id, "pinterest")
+        if adapter is None:
+            continue
+
+        phishing[adapter.url()] = adapter.find_c2()
+
+    return phishing
 
 
 @click.command()
@@ -86,20 +119,26 @@ def main(path, extract_dex):
         sys.exit(1)
 
     output = {}
-    meta = {}
 
     if extract_dex:
         filename = "{}.dex".format(path)
         with open(filename, "wb") as fp:
             fp.write(dex.get_buff())
-            meta["dex"] = "hidden dex is extracted as {}".format(filename)
+            output["dex"] = "hidden dex is extracted as {}".format(filename)
 
     strings = dex.get_strings()
-    output["1stC2destinations"] = find_first_c2_accounts(strings)
-    output["phishingStepStones"] = find_phishing_step_stones(strings)
-    output["meta"] = meta
+    output["c2"] = find_c2(strings)
+    output["phishing"] = find_phishing(strings)
     print(json.dumps(output, sort_keys=True, indent=4))
 
 
 if __name__ == '__main__':
+    sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+    from moqhao.adapter.blogger import Blogger
+    from moqhao.adapter.google import Google
+    from moqhao.adapter.instagram import Instagram
+    from moqhao.adapter.pinterest import Pinterest
+    from moqhao.adapter.youtube import YouTube
+
     main()
