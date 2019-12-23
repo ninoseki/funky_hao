@@ -55,6 +55,8 @@ def build_adapter(id: str, provider: str):
         return Google(id)
     elif provider == "blogger":
         return Blogger(id)
+    elif provider == "vk":
+        return VK(id)
     elif provider == "pinterest":
         return Pinterest(id)
     else:
@@ -139,6 +141,7 @@ if __name__ == '__main__':
     from moqhao.adapter.google import Google
     from moqhao.adapter.instagram import Instagram
     from moqhao.adapter.pinterest import Pinterest
+    from moqhao.adapter.vk import VK
     from moqhao.adapter.youtube import YouTube
 
     main()
