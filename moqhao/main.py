@@ -57,6 +57,8 @@ def build_adapter(id: str, provider: str):
         return Blogger(id)
     elif provider == "vk":
         return VK(id)
+    elif provider == "blogspot":
+        return Blogspot(id)
     elif provider == "pinterest":
         return Pinterest(id)
     else:
@@ -138,6 +140,7 @@ if __name__ == '__main__':
     sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
     from moqhao.adapter.blogger import Blogger
+    from moqhao.adapter.blogspot import Blogspot
     from moqhao.adapter.google import Google
     from moqhao.adapter.instagram import Instagram
     from moqhao.adapter.pinterest import Pinterest
