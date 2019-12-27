@@ -44,7 +44,6 @@ def find_hidden_dex(apk: APK):
 
 
 def build_adapter(id: str, provider: str):
-    # TODO: implement VK adapter
     if provider == "youtube":
         return YouTube(id)
     elif provider == "ins":
@@ -64,7 +63,7 @@ def build_adapter(id: str, provider: str):
 
 
 def find_c2(strings: List[str]):
-    accounts = [x for x in strings if re.match(r"^[a-z]+\|.+", x)]
+    accounts = [x for x in strings if re.match(r"^[a-z0-9]+\|.+", x)]
     if len(accounts) != 1:
         return []
 
