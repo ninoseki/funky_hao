@@ -31,6 +31,19 @@ def decrypt_dex(data):
         return None
 
 
+def decrypt_dex_b(data):
+    try:
+        first_byte = data[BYTES_TO_SKIP]
+        byte_array = []
+        for idx in range(BYTES_TO_SKIP + 1, len(data)):
+            byte_array.append(data[idx] ^ first_byte)
+        decompressed = zlib.decompress(bytes(byte_array))
+        b64decoded = base64.b64decode(decompressed)
+        return dvm.DalvikVMFormat(b64decoded)
+    except:
+        return None
+
+
 def find_hidden_dex(apk: APK):
     files = apk.get_files()
     hidden_dex_names = [x for x in files if re.match(
@@ -38,7 +51,10 @@ def find_hidden_dex(apk: APK):
     if len(hidden_dex_names) == 1:
         hidden_dex_name = hidden_dex_names[0]
         data = apk.get_file(hidden_dex_name)
-        return decrypt_dex(data)
+        dex = decrypt_dex(data)
+        if dex is not None:
+            return dex
+        return decrypt_dex_b(data)
 
     return None
 
