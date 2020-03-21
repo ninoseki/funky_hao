@@ -4,7 +4,7 @@
 
 ```bash
 git clone https://github.com/ninoseki/funky_hao
-pip3 install -r requirements.txt
+pipenv install
 ```
 
 ## MoqHao

@@ -4,10 +4,21 @@ from typing import List
 import base64
 import click
 import json
-import re
 import os
+import re
 import sys
 import zlib
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))  # noqa
+
+from moqhao.adapter.blogger import Blogger
+from moqhao.adapter.blogspot import Blogspot
+from moqhao.adapter.google import Google
+from moqhao.adapter.instagram import Instagram
+from moqhao.adapter.pinterest import Pinterest
+from moqhao.adapter.vk import VK
+from moqhao.adapter.youtube import YouTube
+
 
 BYTES_TO_SKIP = 4
 KEY = b"Ab5d1Q32"
@@ -17,7 +28,7 @@ def parse_apk(path):
     try:
         apk = APK(path)
         return apk
-    except:
+    except Exception:
         return None
 
 
@@ -27,7 +38,7 @@ def decrypt_dex(data):
         decompressed = zlib.decompress((data[BYTES_TO_SKIP:]))
         b64decoded = base64.b64decode(decompressed)
         return dvm.DalvikVMFormat(b64decoded)
-    except:
+    except Exception:
         return None
 
 
@@ -40,14 +51,13 @@ def decrypt_dex_b(data):
         decompressed = zlib.decompress(bytes(byte_array))
         b64decoded = base64.b64decode(decompressed)
         return dvm.DalvikVMFormat(b64decoded)
-    except:
+    except Exception:
         return None
 
 
 def find_hidden_dex(apk: APK):
     files = apk.get_files()
-    hidden_dex_names = [x for x in files if re.match(
-        r"assets/[a-z0-9]+/[a-z0-9]+", x)]
+    hidden_dex_names = [x for x in files if re.match(r"assets/[a-z0-9]+/[a-z0-9]+", x)]
     if len(hidden_dex_names) == 1:
         hidden_dex_name = hidden_dex_names[0]
         data = apk.get_file(hidden_dex_name)
@@ -99,17 +109,15 @@ def find_c2(strings: List[str]):
                 "error": "failed to analyze it",
             }
         else:
-            c2[adapter.url()] = {
-                "payload": adapter.payload(),
-                "destination": _c2
-            }
+            c2[adapter.url()] = {"payload": adapter.payload(), "destination": _c2}
 
     return c2
 
 
 def find_phishing(strings: List[str]):
-    accounts = [x for x in strings if re.match(
-        r"https:\/\/www\.pinterest\.com/[a-z0-9]+\/", x)]
+    accounts = [
+        x for x in strings if re.match(r"https:\/\/www\.pinterest\.com/[a-z0-9]+\/", x)
+    ]
 
     phishing = {}
     for account in accounts:
@@ -125,7 +133,9 @@ def find_phishing(strings: List[str]):
 
 @click.command()
 @click.argument("path", type=click.Path(exists=True))
-@click.option("--extract-dex/--no-extract-dex", default=True, help="Extract a hidden dex")
+@click.option(
+    "--extract-dex/--no-extract-dex", default=True, help="Extract a hidden dex"
+)
 def main(path, extract_dex):
     apk = parse_apk(path)
     if apk is None:
@@ -151,15 +161,6 @@ def main(path, extract_dex):
     print(json.dumps(output, sort_keys=True, indent=4))
 
 
-if __name__ == '__main__':
-    sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
-    from moqhao.adapter.blogger import Blogger
-    from moqhao.adapter.blogspot import Blogspot
-    from moqhao.adapter.google import Google
-    from moqhao.adapter.instagram import Instagram
-    from moqhao.adapter.pinterest import Pinterest
-    from moqhao.adapter.vk import VK
-    from moqhao.adapter.youtube import YouTube
+if __name__ == "__main__":
 
     main()

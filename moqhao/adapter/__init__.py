@@ -48,7 +48,7 @@ class BaseAdapter(ABC):
         b = base64.urlsafe_b64decode(payload)
         des = DES.new(self.key, 2, self.key)
         decrypted = des.decrypt(b)
-        return decrypted[:-self.bytes_to_skip]
+        return decrypted[: -self.bytes_to_skip]
 
     def find_c2(self):
         try:

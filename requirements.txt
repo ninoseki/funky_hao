@@ -1,4 +1,0 @@
-androguard
-click
-pycrypto
-requests-html
