@@ -19,4 +19,3 @@ class Blogspot(BaseAdapter):
             return
         else:
             return profile.text
-

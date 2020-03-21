@@ -1,0 +1,25 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+autoflake = "*"
+autopep8 = "*"
+black = "*"
+isort = {extras = ["pipfile"],version = "*"}
+mypy = "*"
+v = {editable = true,version = "*"}
+flake8 = "*"
+
+[packages]
+androguard = "*"
+click = "*"
+pycrypto = "*"
+requests-html = "*"
+
+[requires]
+python_version = "3.8"
+
+[pipenv]
+allow_prereleases = true
