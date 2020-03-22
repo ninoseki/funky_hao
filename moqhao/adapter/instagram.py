@@ -1,6 +1,6 @@
-from . import BaseAdapter
+import httpx
 
-import requests
+from . import BaseAdapter
 
 
 class Instagram(BaseAdapter):
@@ -11,9 +11,11 @@ class Instagram(BaseAdapter):
         # https://www.instagram.com/{}/?__a=1
         return "{}/{}/?__a=1".format(self._base_url(), self.id)
 
-    def _get(self):
-        return requests.get(self.url()).json()
+    async def _get(self):
+        client = httpx.AsyncClient()
+        r = await client.get(self.url())
+        return r.json()
 
-    def _payload(self):
-        json = self._get()
+    async def _payload(self):
+        json = await self._get()
         return json.get("graphql", {}).get("user", {}).get("biography")

@@ -9,8 +9,8 @@ class YouTube(BaseAdapter):
         # "https://m.youtube.com/channel/{}/about"
         return "{}/{}/about".format(self._base_url(), self.id)
 
-    def _payload(self):
-        html = self._get()
+    async def _payload(self):
+        html = await self._get()
         metas = html.find("meta")
         descs = [
             meta for meta in metas if meta.attrs.get("property") == "og:description"

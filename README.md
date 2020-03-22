@@ -1,5 +1,10 @@
 # funky_hao
 
+## Requirements
+
+- Python 3.7+
+- pipvenv
+
 ## Install
 
 ```bash
@@ -15,7 +20,7 @@ pipenv install
   - Extract phishing websites
 
 ```bash
-$ python3 moqhao/main.py --help
+$ python moqhao/main.py --help
 Usage: main.py [OPTIONS] PATH
 
 Options:
@@ -25,5 +30,5 @@ Options:
 ```
 
 ```bash
-python3 moqhao/main.py samples/foo.apk
+python moqhao/main.py samples/foo.apk
 ```

@@ -1,13 +1,17 @@
 from androguard.core.bytecodes import dvm
 from androguard.core.bytecodes.apk import APK
+from loguru import logger
 from typing import List
+import aiometer
+import asyncclick as click
 import base64
-import click
+import functools
 import json
 import os
 import re
 import sys
 import zlib
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))  # noqa
 
@@ -37,8 +41,11 @@ def decrypt_dex(data):
     try:
         decompressed = zlib.decompress((data[BYTES_TO_SKIP:]))
         b64decoded = base64.b64decode(decompressed)
-        return dvm.DalvikVMFormat(b64decoded)
+        vm = dvm.DalvikVMFormat(b64decoded)
+        logger.debug("Decrypted as type A")
+        return vm
     except Exception:
+        logger.debug("Failed to decrypt as type A")
         return None
 
 
@@ -50,8 +57,11 @@ def decrypt_dex_b(data):
             byte_array.append(data[idx] ^ first_byte)
         decompressed = zlib.decompress(bytes(byte_array))
         b64decoded = base64.b64decode(decompressed)
-        return dvm.DalvikVMFormat(b64decoded)
+        vm = dvm.DalvikVMFormat(b64decoded)
+        logger.debug("Decrypted as type B")
+        return vm
     except Exception:
+        logger.debug("Failed to decrypt as type B")
         return None
 
 
@@ -90,45 +100,67 @@ def build_adapter(id: str, provider: str):
         return
 
 
-def find_c2(strings: List[str]):
+def list_to_dict(items):
+    memo = {}
+    for item in items:
+        for key in item.keys():
+            memo[key] = item[key]
+    return memo
+
+
+async def find_c2(strings: List[str]):
     accounts = [x for x in strings if re.match(r"^[a-z0-9]+\|.+", x)]
     if len(accounts) != 1:
         return []
 
-    c2 = {}
+    adapters = []
     for account in accounts[0].split("|")[1:]:
+        logger.debug(f"1st C2 = {account}")
+
         id, provider = account.split("@")
         adapter = build_adapter(id, provider)
         if adapter is None:
             continue
+        adapters.append(adapter)
 
-        _c2 = adapter.find_c2()
+    async def run_adapter(adapter):
+        _c2 = await adapter.find_c2()
         if _c2 is None:
-            c2[adapter.url()] = {
-                "payload": adapter.payload(),
-                "error": "failed to analyze it",
+            return {
+                adapter.url(): {
+                    "payload": await adapter.payload(),
+                    "error": "failed to analyze it",
+                }
             }
         else:
-            c2[adapter.url()] = {"payload": adapter.payload(), "destination": _c2}
+            return {
+                adapter.url(): {"payload": await adapter.payload(), "destination": _c2}
+            }
 
-    return c2
+    jobs = [functools.partial(run_adapter, adapter) for adapter in adapters]
+    results = await aiometer.run_all(jobs, max_at_once=10)
+    return list_to_dict(results)
 
 
-def find_phishing(strings: List[str]):
+async def find_phishing(strings: List[str]):
     accounts = [
         x for x in strings if re.match(r"https:\/\/www\.pinterest\.com/[a-z0-9]+\/", x)
     ]
 
-    phishing = {}
+    adapters = []
     for account in accounts:
         id = account.split("/")[-2]
         adapter = build_adapter(id, "pinterest")
         if adapter is None:
             continue
+        adapters.append(adapter)
 
-        phishing[adapter.url()] = adapter.find_c2()
+    async def run_adapter(adapter):
+        return {adapter.url(): await adapter.find_c2()}
 
-    return phishing
+    jobs = [functools.partial(run_adapter, adapter) for adapter in adapters]
+    results = await aiometer.run_all(jobs, max_at_once=10)
+    return list_to_dict(results)
 
 
 @click.command()
@@ -136,7 +168,7 @@ def find_phishing(strings: List[str]):
 @click.option(
     "--extract-dex/--no-extract-dex", default=True, help="Extract a hidden dex"
 )
-def main(path, extract_dex):
+async def main(path, extract_dex):
     apk = parse_apk(path)
     if apk is None:
         print("Invalid apk is given")
@@ -156,11 +188,10 @@ def main(path, extract_dex):
             output["dex"] = "hidden dex is extracted as {}".format(filename)
 
     strings = dex.get_strings()
-    output["c2"] = find_c2(strings)
-    output["phishing"] = find_phishing(strings)
+    output["c2"] = await find_c2(strings)
+    output["phishing"] = await find_phishing(strings)
     print(json.dumps(output, sort_keys=True, indent=4))
 
 
 if __name__ == "__main__":
-
-    main()
+    main(_anyio_backend="asyncio")

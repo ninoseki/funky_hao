@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from Crypto.Cipher import DES
-from requests_html import HTMLSession
-import base64
-import requests
 from functools import lru_cache
+from httpx import HTTPError
+from requests_html import HTML
+import base64
+import httpx
 
 
 class BaseAdapter(ABC):
@@ -19,43 +20,44 @@ class BaseAdapter(ABC):
     def url(self):
         return "{}/{}".format(self._base_url(), self.id)
 
-    def _get(self):
-        session = HTMLSession()
-        r = session.get(self.url())
-        return r.html
+    async def _get(self) -> HTML:
+        client = httpx.AsyncClient()
+        r = await client.get(self.url())
+        return HTML(html=r.text)
 
     @abstractmethod
     def _payload(self):
         pass
 
-    @lru_cache(maxsize=None)
-    def payload(self):
+    async def payload(self):
         try:
-            return self._payload()
-        except requests.exceptions.RequestException as e:
-            return
-        except requests.exceptions.ConnectionError as e:
-            return
+            return await self._payload()
+        except HTTPError:
+            pass
+
+        return None
 
     def _bytes_to_skip(self):
         return 4
 
-    def decrypt(self):
-        payload = self.payload()
+    async def decrypt(self):
+        payload = await self.payload()
         if payload is None:
-            return
+            return None
 
         b = base64.urlsafe_b64decode(payload)
         des = DES.new(self.key, 2, self.key)
         decrypted = des.decrypt(b)
         return decrypted[: -self.bytes_to_skip]
 
-    def find_c2(self):
+    async def find_c2(self):
         try:
-            decrypted = self.decrypt()
+            decrypted = await self.decrypt()
             if decrypted is None:
                 return
 
             return decrypted.decode("utf-8")
-        except ValueError as e:
-            return
+        except ValueError:
+            pass
+
+        return None
