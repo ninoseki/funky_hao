@@ -17,6 +17,10 @@ androguard = "*"
 click = "*"
 pycrypto = "*"
 requests-html = "*"
+httpx = "*"
+aiometer = "*"
+loguru = "*"
+asyncclick = "*"
 
 [requires]
 python_version = "3.8"
