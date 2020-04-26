@@ -1,9 +1,3 @@
-from androguard.core.bytecodes import dvm
-from androguard.core.bytecodes.apk import APK
-from loguru import logger
-from typing import List
-import aiometer
-import asyncclick as click
 import base64
 import functools
 import json
@@ -11,17 +5,23 @@ import os
 import re
 import sys
 import zlib
+from typing import List
 
+import aiometer
+import asyncclick as click
+from androguard.core.bytecodes import dvm
+from androguard.core.bytecodes.apk import APK
+from loguru import logger
 
-sys.path.append(os.path.join(os.path.dirname(__file__), ".."))  # noqa
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))  # noqa # isort:skip
 
-from moqhao.adapter.blogger import Blogger
-from moqhao.adapter.blogspot import Blogspot
-from moqhao.adapter.google import Google
-from moqhao.adapter.instagram import Instagram
-from moqhao.adapter.pinterest import Pinterest
-from moqhao.adapter.vk import VK
-from moqhao.adapter.youtube import YouTube
+from moqhao.adapter.blogger import Blogger  # noqa # isort:skip
+from moqhao.adapter.blogspot import Blogspot  # noqa # isort:skip
+from moqhao.adapter.google import Google  # noqa # isort:skip
+from moqhao.adapter.instagram import Instagram  # noqa # isort:skip
+from moqhao.adapter.pinterest import Pinterest  # noqa # isort:skip
+from moqhao.adapter.vk import VK  # noqa # isort:skip
+from moqhao.adapter.youtube import YouTube  # noqa # isort:skip
 
 
 BYTES_TO_SKIP = 4
@@ -187,7 +187,7 @@ async def main(path, extract_dex):
             fp.write(dex.get_buff())
             output["dex"] = "hidden dex is extracted as {}".format(filename)
 
-    strings = dex.get_strings()
+    strings = [string.decode() for string in dex.get_strings()]
     output["c2"] = await find_c2(strings)
     output["phishing"] = await find_phishing(strings)
     print(json.dumps(output, sort_keys=True, indent=4))
