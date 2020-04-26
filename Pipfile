@@ -11,6 +11,8 @@ isort = {extras = ["pipfile"],version = "*"}
 mypy = "*"
 v = {editable = true,version = "*"}
 flake8 = "*"
+pre-commit = "*"
+seed-isort-config = "*"
 
 [packages]
 androguard = "*"

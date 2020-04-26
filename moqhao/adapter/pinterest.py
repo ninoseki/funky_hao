@@ -1,5 +1,4 @@
 from . import BaseAdapter
-import requests
 
 
 class Pinterest(BaseAdapter):
