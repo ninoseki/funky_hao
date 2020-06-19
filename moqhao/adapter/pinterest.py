@@ -15,7 +15,10 @@ class Pinterest(BaseAdapter):
             return
 
         about = abouts[0]
-        return about.attrs.get("content")
+        content = about.attrs.get("content")
+        if "----" in content:
+            return content.split("----")[-1]
+        return content
 
     async def find_c2(self):
         return await self.payload()
