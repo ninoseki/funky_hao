@@ -3,13 +3,13 @@
 ## Requirements
 
 - Python 3.7+
-- pipvenv
+- poetry
 
 ## Install
 
 ```bash
 git clone https://github.com/ninoseki/funky_hao
-pipenv install
+poetry install
 ```
 
 ## MoqHao
